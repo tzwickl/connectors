@@ -5,6 +5,7 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
@@ -20,7 +21,7 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rocks.inspectit.jaeger.connectors.IDatabase;
+import rocks.inspectit.jaeger.connectors.IDatasource;
 import rocks.inspectit.jaeger.model.config.ElasticSearchConfig;
 import rocks.inspectit.jaeger.model.trace.elasticsearch.Trace;
 
@@ -28,15 +29,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Elasticsearch implements IDatabase<Trace> {
+public class Elasticsearch implements IDatasource<Trace> {
     private static final Logger logger = LoggerFactory.getLogger(Elasticsearch.class);
 
     private final RestHighLevelClient client;
     private final ObjectMapper objectMapper;
-    private final String doc;
+    private final String index;
 
     public Elasticsearch(ElasticSearchConfig config) {
-        this.doc = config.getDoc();
+        this.index = config.getIndex();
         this.objectMapper = new ObjectMapper();
         this.client = new RestHighLevelClient(
                 RestClient.builder(
@@ -50,7 +51,7 @@ public class Elasticsearch implements IDatabase<Trace> {
 
     @Override
     public List<Trace> getTraces(final String serviceName) {
-        SearchRequest searchRequest = new SearchRequest(this.doc);
+        SearchRequest searchRequest = new SearchRequest(this.index);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchQuery(Constants.SERVICE_NAME_PATH.getValue(), serviceName));
         searchRequest.source(searchSourceBuilder);
@@ -89,7 +90,7 @@ public class Elasticsearch implements IDatabase<Trace> {
 
     @Override
     public List<Trace> getTraces(final String serviceName, Long startTime) {
-        SearchRequest searchRequest = new SearchRequest(this.doc);
+        SearchRequest searchRequest = new SearchRequest(this.index);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(QueryBuilders.matchQuery(Constants.SERVICE_NAME_PATH.getValue(), serviceName));
@@ -103,7 +104,7 @@ public class Elasticsearch implements IDatabase<Trace> {
 
     @Override
     public List<Trace> getTraces(final String serviceName, Long startTime, Long endTime) {
-        SearchRequest searchRequest = new SearchRequest(this.doc);
+        SearchRequest searchRequest = new SearchRequest(this.index);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(QueryBuilders.matchQuery(Constants.SERVICE_NAME_PATH.getValue(), serviceName));
@@ -117,6 +118,29 @@ public class Elasticsearch implements IDatabase<Trace> {
 
     @Override
     public void saveTraces(List<Trace> traces) {
+        BulkRequest request = new BulkRequest();
+
+        traces.forEach(trace -> {
+            request.add(this.createIndexRequest(trace));
+        });
+
+        try {
+            BulkResponse bulkResponse = client.bulk(request);
+            if (bulkResponse.hasFailures()) {
+                for (BulkItemResponse bulkItemResponse : bulkResponse) {
+                    if (bulkItemResponse.isFailed()) {
+                        BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
+                        logger.error("Failure while creating index: " + failure.toString());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void updateTraces(List<Trace> traces) {
         BulkRequest request = new BulkRequest();
 
         traces.forEach(trace -> {
@@ -143,6 +167,19 @@ public class Elasticsearch implements IDatabase<Trace> {
             UpdateRequest request = new UpdateRequest(trace.getIndexName(), trace.getType(), trace.getUUID());
             String json = this.objectMapper.writeValueAsString(trace);
             request.doc(json, XContentType.JSON);
+            return request;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private IndexRequest createIndexRequest(Trace trace) {
+        try {
+            IndexRequest request = new IndexRequest(this.index, Constants.TYPE_TRACE.getValue(), trace.getTraceId());
+            String json = this.objectMapper.writeValueAsString(trace);
+            request.source(json, XContentType.JSON);
             return request;
         } catch (IOException e) {
             e.printStackTrace();

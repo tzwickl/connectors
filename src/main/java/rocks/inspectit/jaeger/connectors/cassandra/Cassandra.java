@@ -9,14 +9,14 @@ import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rocks.inspectit.jaeger.connectors.IDatabase;
+import rocks.inspectit.jaeger.connectors.IDatasource;
 import rocks.inspectit.jaeger.model.config.CassandraConfig;
 import rocks.inspectit.jaeger.model.trace.cassandra.Trace;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Cassandra implements IDatabase<Trace> {
+public class Cassandra implements IDatasource<Trace> {
     private static final Logger logger = LoggerFactory.getLogger(Cassandra.class);
 
     private Cluster cluster;
@@ -95,6 +95,13 @@ public class Cassandra implements IDatabase<Trace> {
 
     @Override
     public void saveTraces(List<Trace> traces) {
+        traces.forEach(trace -> {
+            this.tracesMapper.save(trace);
+        });
+    }
+
+    @Override
+    public void updateTraces(List<Trace> traces) {
         traces.forEach(trace -> {
             this.tracesMapper.save(trace);
         });

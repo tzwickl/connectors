@@ -7,7 +7,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rocks.inspectit.jaeger.connectors.IDatabase;
+import rocks.inspectit.jaeger.connectors.IDatasource;
 import rocks.inspectit.jaeger.model.config.KafkaConfig;
 import rocks.inspectit.jaeger.model.trace.kafka.Trace;
 
@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-public class Kafka implements IDatabase<Trace> {
+public class Kafka implements IDatasource<Trace> {
     private static final Logger logger = LoggerFactory.getLogger(Kafka.class);
     private final String serviceName;
     private Producer<String, Trace> producer;
@@ -93,5 +93,10 @@ public class Kafka implements IDatabase<Trace> {
             producer.send(producerRecord);
         });
         //consumer.commitSync();
+    }
+
+    @Override
+    public void updateTraces(List<Trace> traces) {
+        throw new UnsupportedOperationException("Update not supported by kafka");
     }
 }
