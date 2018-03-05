@@ -1,0 +1,3 @@
+rootProject.name = 'rocks.inspectit.jaeger.connectors'
+include 'rocks.inspectit.jaeger.model'
+project(':rocks.inspectit.jaeger.model').projectDir = new File(settingsDir, '../models')

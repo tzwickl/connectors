@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rocks.inspectit.jaeger.collectors.iml" filepath="$PROJECT_DIR$/.idea/modules/rocks.inspectit.jaeger.collectors.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rocks.inspectit.jaeger.collectors_main.iml" filepath="$PROJECT_DIR$/.idea/modules/rocks.inspectit.jaeger.collectors_main.iml" group="rocks.inspectit.jaeger.collectors" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rocks.inspectit.jaeger.collectors_test.iml" filepath="$PROJECT_DIR$/.idea/modules/rocks.inspectit.jaeger.collectors_test.iml" group="rocks.inspectit.jaeger.collectors" />
+    </modules>
+  </component>
+</project>

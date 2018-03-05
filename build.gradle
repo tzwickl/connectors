@@ -1,0 +1,33 @@
+group 'rocks.inspectit.jaeger'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+version = 1.0
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/com.datastax.cassandra/cassandra-driver-core
+    compile group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '3.3.2'
+    compile group: 'com.datastax.cassandra', name: 'cassandra-driver-mapping', version: '3.3.2'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.8.0-beta0'
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-simple
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.8.0-beta0'
+    // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-to-slf4j
+    compile group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.10.0'
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.0.1'
+    // elasticsearch
+    compile 'org.elasticsearch.client:elasticsearch-rest-high-level-client:6.0.1'
+    // https://mvnrepository.com/artifact/org.apache.kafka/kafka
+    compile group: 'org.apache.kafka', name: 'kafka_2.12', version: '1.0.0'
+    compile project(':rocks.inspectit.jaeger.model')
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
