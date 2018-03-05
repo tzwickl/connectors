@@ -19,13 +19,11 @@ import java.util.Properties;
 
 public class Kafka implements IDatasource<Trace> {
     private static final Logger logger = LoggerFactory.getLogger(Kafka.class);
-    private final String serviceName;
     private Producer<String, Trace> producer;
     private KafkaConsumer<String, Trace> consumer;
     private String outputTopic;
 
-    public Kafka(String serviceName, KafkaConfig kafkaConfig) {
-        this.serviceName = serviceName;
+    public Kafka(KafkaConfig kafkaConfig) {
         this.outputTopic = kafkaConfig.getOutputTopic();
         this.initConsumer(kafkaConfig);
         this.initProducer(kafkaConfig);
@@ -69,10 +67,13 @@ public class Kafka implements IDatasource<Trace> {
         ConsumerRecords<String, Trace> records = consumer.poll(10000);
         List<Trace> traces = new ArrayList<>();
         records.forEach(record -> {
-            if (record.value() != null) {
+            if (record.value() != null
+                    && record.value().getProcess() != null
+                    && record.value().getProcess().getServiceName().equals(serviceName)) {
                 traces.add(record.value());
             }
         });
+        consumer.commitSync();
         return traces;
     }
 
@@ -92,7 +93,6 @@ public class Kafka implements IDatasource<Trace> {
             ProducerRecord<String, Trace> producerRecord = new ProducerRecord<>(outputTopic, trace.getUUID(), trace);
             producer.send(producerRecord);
         });
-        //consumer.commitSync();
     }
 
     @Override

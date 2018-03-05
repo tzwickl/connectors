@@ -2,6 +2,9 @@ package rocks.inspectit.jaeger.connectors.elasticsearch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpHost;
+import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.open.OpenIndexRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -23,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rocks.inspectit.jaeger.connectors.IDatasource;
 import rocks.inspectit.jaeger.model.config.ElasticSearchConfig;
+import rocks.inspectit.jaeger.model.trace.elasticsearch.IndexMapping;
 import rocks.inspectit.jaeger.model.trace.elasticsearch.Trace;
 
 import java.io.IOException;
@@ -120,6 +124,18 @@ public class Elasticsearch implements IDatasource<Trace> {
     public void saveTraces(List<Trace> traces) {
         BulkRequest request = new BulkRequest();
 
+        try {
+            client.indices().open(new OpenIndexRequest(this.index));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ElasticsearchStatusException _) {
+            try {
+                client.indices().create(this.createIndex());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         traces.forEach(trace -> {
             request.add(this.createIndexRequest(trace));
         });
@@ -186,5 +202,11 @@ public class Elasticsearch implements IDatasource<Trace> {
         }
 
         return null;
+    }
+
+    private CreateIndexRequest createIndex() {
+        CreateIndexRequest request = new CreateIndexRequest(this.index);
+        request.mapping(Constants.TYPE_TRACE.getValue(), IndexMapping.getExtendedTraceMapping(), XContentType.JSON);
+        return request;
     }
 }
