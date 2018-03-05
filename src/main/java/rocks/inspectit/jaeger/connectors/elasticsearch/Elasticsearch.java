@@ -193,7 +193,7 @@ public class Elasticsearch implements IDatasource<Trace> {
 
     private IndexRequest createIndexRequest(Trace trace) {
         try {
-            IndexRequest request = new IndexRequest(this.index, Constants.TYPE_TRACE.getValue(), trace.getTraceId());
+            IndexRequest request = new IndexRequest(this.index, Constants.TYPE_TRACE.getValue(), trace.getTraceId() + trace.getSpanId());
             String json = this.objectMapper.writeValueAsString(trace);
             request.source(json, XContentType.JSON);
             return request;
